@@ -28,5 +28,5 @@ Seconds where is_stopped are grouped with mean values of lat, long and depth. Yo
 
 #### Requirements
 numpy, numba, pandas, scipy, rdp <br>
-track_clean.py also requires pyqtgraph and PyQt5 <br>
+track_clean.py also requires cv2, pyqtgraph and PyQt5 <br>
 All can be installed using **pip**
