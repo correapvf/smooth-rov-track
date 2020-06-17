@@ -11,8 +11,8 @@ from sklearn.neighbors import NearestNeighbors
 from rdp import rdp
 
 # path\name to input and output csv
-input = r"G:\Meu Drive\Doutorado\Videos HyBIS\scripts\track clean\track_clean.csv" #"path/to/input.csv"
-output = r"G:\Meu Drive\Doutorado\Videos HyBIS\scripts\track clean\track_clean_python.csv" #"path/to/input.csv"
+input = "path/to/input.csv"
+output = "path/to/input.csv"
 
 # precision of the USBL eg. a value of 0.01 means 1% precision per meter depth
 depth_multiplier = 0.005
