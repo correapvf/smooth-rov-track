@@ -12,7 +12,7 @@ Feel free to modify these scripts as you need!
 ### Usage
 There are two scripts in the folder:
 - `track_clean.py` - clean and smooth track data
-- `track_view.py` - display video and track simultaneously
+- `track_view.py` - simple GUI to display video and track simultaneously
 
 Check and edit parameters in the beginning of each script.
 

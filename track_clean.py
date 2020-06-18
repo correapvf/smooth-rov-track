@@ -21,9 +21,9 @@ depth_multiplier = 0.005
 knn = 10
 
 # distance from the mean for a point to be considered a outlier (same unit as lat, lon, depth)
-outlier_thr = 20
-# window size to compute the rolling mean
-mean_window = 5
+outlier_thr = 20.0
+# window size to compute the rolling mean (or use consecutive differences if below 3)
+mean_window = 1
 
 ###########################
 start_time = time.time()
@@ -95,10 +95,19 @@ for i, g_dive in dt.groupby(by=['Dive']):
     first = g_dive.iloc[0, col_stopped]
     last = g_dive.iloc[-1, col_stopped]
 
-    # remove outliers by calculating the difference from the value and the rolling mean
-    means = g_dive[['Lon','Lat','Depth']].rolling(mean_window, center=True).mean()
-    means = means.interpolate(method='pad')
-    diffs = np.abs(means - g_dive[['Lon','Lat','Depth']]) < outlier_thr
+    # remove outliers
+    if mean_window < 3:
+        # by calculating the difference from consecutive values
+        means = g_dive[['Lon','Lat','Depth']].shift() - g_dive[['Lon','Lat','Depth']]
+        means.iloc[0] = means.iloc[1]
+        diffs = means < outlier_thr
+    else:
+        # by calculating the difference from the value and the rolling mean
+        means = g_dive[['Lon','Lat','Depth']].rolling(mean_window, win_type = 'gaussian', \
+                                                      center = True).mean(std = 1)
+        means = means.fillna(method='ffill').fillna(method='bfill') # edges are not removed
+        diffs = np.abs(means - g_dive[['Lon','Lat','Depth']]) < outlier_thr
+    
     g_dive = g_dive[diffs['Lon'] & diffs['Lat'] & diffs['Depth']]
 
     for i2, g_stopped in g_dive.groupby(by=['nstopped']):
@@ -114,10 +123,10 @@ for i, g_dive in dt.groupby(by=['Dive']):
             time_new = pd.date_range(track_dive['Date_Time'].loc[start], track_dive['Date_Time'].loc[end], freq='S')
             time_new = time_new[1:-1]
 
-            # generate a df with mean values
+            # generate a df with median values
             df1 = pd.DataFrame({'Dive': i, 'nstopped': i2, \
-                               'Date_Time': time_new, 'Lon': g_stopped['Lon'].mean(), \
-                               'Lat': g_stopped['Lat'].mean(), 'Depth': g_stopped['Depth'].mean()})
+                               'Date_Time': time_new, 'Lon': g_stopped['Lon'].median(), \
+                               'Lat': g_stopped['Lat'].median(), 'Depth': g_stopped['Depth'].median()})
             
             # set the fist and last value from stopped to moving group
             # this is necessary for the filters
