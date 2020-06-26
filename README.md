@@ -1,6 +1,4 @@
-# smooth rov track
-
-### Python script to clean and smooth track data (GPS/USBL) of ROVs
+# Python script to clean and smooth track data (GPS/USBL) of ROVs
 
 This is a script example to clean and smooth USBL track data of ROVs.
 It will remove invalid lines and outliers, apply a distance threshold filter, followed by 3D Ramer-Douglas-Peucker algorithm.
@@ -27,10 +25,10 @@ Input track must be a csv file as below:
 
 #### Observations
 Heading is not cleaned by the filters, but missing values are interpolated. You can fill a column with zeroes to ignore it.<br>
-Seconds where is_stopped are grouped with mean values of lat, long and depth. You can set all to 'False' if ROV is always moving.
+Seconds where is_stopped are grouped with mean values of lat, long and depth. You can set all to 'False' if ROV is always moving.<br>
 You should always check the tracks in a GIS software. The track_view.py does not intend to substitute that.
 
 #### Requirements
-`numpy`, `numba`, `pandas`, `scipy`, `sklearn` and `rdp`<br>
-`track_clean.py` also requires `opencv`, `pyqtgraph` and `PyQt5` <br>
-All can be installed using **pip**
+- Python3
+- numpy, numba, pandas, scipy, sklearn and rdp
+- opencv, pyqtgraph and PyQt5 for `track_view.py`

@@ -10,9 +10,8 @@ from scipy import interpolate
 from sklearn.neighbors import NearestNeighbors
 from rdp import rdp
 
-# path\name to input and output csv
+# path\name to input csv
 input = "path/to/input.csv"
-output = "path/to/input.csv"
 
 # precision of the USBL eg. a value of 0.01 means 1% precision per meter depth
 depth_multiplier = 0.005
@@ -26,6 +25,7 @@ outlier_thr = 20.0
 mean_window = 1
 
 ###########################
+output = input[:-4] + '_clean.csv'
 start_time = time.time()
 knn2 = knn//2
 
