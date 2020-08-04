@@ -11,18 +11,22 @@ from sklearn.neighbors import NearestNeighbors
 from rdp import rdp
 
 # path\name to input csv
-input = "path/to/input.csv"
+input = "path/to/video.mp4"
 
 # precision of the USBL eg. a value of 0.01 means 1% precision per meter depth
-depth_multiplier = 0.005
+depth_multiplier = 0.01
 
 # number of neighbors to compute distances. see function dist_filter below.
 knn = 10
 
+# interpolation method. True = pchip; False = linear
+use_pchip = False
+
 # distance from the mean for a point to be considered a outlier (same unit as lat, lon, depth)
 outlier_thr = 20.0
-# window size to compute the rolling mean (or use consecutive differences if below 3)
-mean_window = 1
+# window size to compute the rolling mean (or use consecutive differences if 1)
+# this rolling mean is used to detect outliers only, which are ignored
+window_size_outlier = 1 # must be odd
 
 ###########################
 output = input[:-4] + '_clean.csv'
@@ -96,14 +100,14 @@ for i, g_dive in dt.groupby(by=['Dive']):
     last = g_dive.iloc[-1, col_stopped]
 
     # remove outliers
-    if mean_window < 3:
+    if window_size_outlier < 3:
         # by calculating the difference from consecutive values
         means = g_dive[['Lon','Lat','Depth']].shift() - g_dive[['Lon','Lat','Depth']]
         means.iloc[0] = means.iloc[1]
         diffs = means < outlier_thr
     else:
         # by calculating the difference from the value and the rolling mean
-        means = g_dive[['Lon','Lat','Depth']].rolling(mean_window, win_type = 'gaussian', \
+        means = g_dive[['Lon','Lat','Depth']].rolling(window_size_outlier, win_type = 'gaussian', \
                                                       center = True).mean(std = 1)
         means = means.fillna(method='ffill').fillna(method='bfill') # edges are not removed
         diffs = np.abs(means - g_dive[['Lon','Lat','Depth']]) < outlier_thr
@@ -121,7 +125,7 @@ for i, g_dive in dt.groupby(by=['Dive']):
             start = max(track_g.index[0] - 1, track_dive.index[0]) # avoid to get values from another dive
             end = min(track_g.index[-1] + 1, track_dive.index[-1])
             time_new = pd.date_range(track_dive['Date_Time'].loc[start], track_dive['Date_Time'].loc[end], freq='S')
-            time_new = time_new[1:-1]
+            #time_new = time_new[1:-1]
 
             # generate a df with median values
             df1 = pd.DataFrame({'Dive': i, 'nstopped': i2, \
@@ -186,16 +190,15 @@ for i, g in dt.groupby(by=['Dive','nstopped']):
             filtered = filtered.loc[index]
 
         # interpolate for each second
-        ### uncomment below lines for linear interpolation
-        # fit = interpolate.interp1d(filtered['Date_Time'].values.astype(float), filtered[['Lon','Lat','Depth']], \
-        #                             kind = 'linear', axis = 0, fill_value = 'extrapolate')
-        # xyz_new = fit(time_new.values.astype(float))
-        ###
-        ### or uncomment these for pchip interpolation
-        fit = interpolate.PchipInterpolator(filtered['Date_Time'], filtered[['Lon','Lat','Depth']])
-        xyz_new = fit(time_new, extrapolate = True)
-        ###
-
+        if use_pchip:
+            fit = interpolate.PchipInterpolator(filtered['Date_Time'], filtered[['Lon','Lat','Depth']])
+            xyz_new = fit(time_new, extrapolate = True)
+        
+        else:    
+            fit = interpolate.interp1d(filtered['Date_Time'].values.astype(float), filtered[['Lon','Lat','Depth']], \
+                                        kind = 'linear', axis = 0, fill_value = 'extrapolate')
+            xyz_new = fit(time_new.values.astype(float))
+        
         df1 = pd.DataFrame({'Date_Time': time_new, 'Lon': xyz_new[:,0], 'Lat': xyz_new[:,1], 'Depth': xyz_new[:,2]})
         df1['Dive'] = i[0]
     
